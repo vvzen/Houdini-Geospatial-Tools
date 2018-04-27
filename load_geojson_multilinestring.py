@@ -30,12 +30,12 @@ def spherical_to_cartesian(lon, lat, radius):
 
 # see https://stackoverflow.com/questions/14329691/convert-latitude-longitude-point-to-a-pixels-x-y-on-mercator-projection
 def spherical_to_mercator(lon, lat, mapWidth, mapHeight):
-    
     x = (lon + 180) * (mapWidth/360)
     latitude_radians = lat * math.pi / 180
     mercator_N = math.log(math.tan((math.pi / 4) + (latitude_radians / 2)))
     y = (mapHeight / 2) - (mapWidth * mercator_N / (math.pi * 2))
-    return x, y, 0
+    
+    return x, y, 0    
 
 # grabbed from houdini geospatial tools
 def createPrim(coords, openStatus):
@@ -79,14 +79,9 @@ def main():
     # loop through geojson features in order to add points
     for index, feature in enumerate(geojson["features"][:]):
     
-        # Check if the user pressed Escape.
+        # Check if the user pressed Escape
         if hou.updateProgressAndCheckForInterrupt():
             break
-    
-        try:
-            feature_name = feature["properties"]["name"]
-        except KeyError:
-            print "no name available for current feature: {}".format(feature)
             
         attribs = feature["properties"]
         
@@ -101,45 +96,83 @@ def main():
             #print "\tfeature: {}".format(feature)
             continue
             
+        coords_list = []
+            
         if feature_type == "MultiLineString":
             coords_list = feature["geometry"]["coordinates"][0]
         elif feature_type == "LineString":
             coords_list = feature["geometry"]["coordinates"]
         else:
-            print "Unrecognized property: {}".format(feature_type)
+            if feature_type == "MultiPolygon":
+            
+                # create a polygon for each poly inside the multipolygon
+                for polygons_array in feature["geometry"]["coordinates"]:
+                
+                    print "\nlen of polygons_array: "
+                    print len(polygons_array)
+                    
+                    for polygon in polygons_array:
+                    
+                        print "\nlen of polygon: "
+                        print len(polygon)
+                        
+                        poly = geo.createPolygon()
+                        poly.setIsClosed(False)
+                    
+                        for coord in polygon:
+                        
+                            pt = geo.createPoint()
+            
+                            lat = coord[1]
+                            lon = coord[0]
+                            
+                            if mercator_checked:
+                                try:
+                                    x, y, z = spherical_to_mercator(lon, lat, map_width, map_height)
+                                except ValueError:
+                                    print "skipping current point!"
+                                    print "value error on given coords: {}, {}".format(lon, lat)
+                                    continue
+                            else:
+                                x, y, z = spherical_to_cartesian(lon, lat, 1)
+                                
+                            pt.setPosition((x, y, z))
+                            poly.addVertex(pt)
+                        
+                            print "lat: {}, lon: {}".format(lat, lon)
+            else:
+                print "Unrecognized property: {}".format(feature_type)
+        
         # using example from http://www.sidefx.com/docs/houdini/hom/hou/Geometry#createPolygons
         
-        #print "coords_list:"
-        #print coords_list
+        if len(coords_list) > 0:
         
-        poly = geo.createPolygon()
-        poly.setIsClosed(False)
+            print "coords_list: \n"
+            print coords_list
+        
+            poly = geo.createPolygon()
+            poly.setIsClosed(False)
     
-        for coord in coords_list:
-            pt = geo.createPoint()
+            for coord in coords_list:
+                pt = geo.createPoint()
             
-            lat = coord[1]
-            lon = coord[0]
+                lat = coord[1]
+                lon = coord[0]
             
-            #print "current coord:"
-            #print coord
-            #print "lon: {}".format(lon)
-            #print "lat: {}".format(lat)
-            
-            if mercator_checked:
-                x, y, z = spherical_to_mercator(lon, lat, map_width, map_height)
-            else:
-                x, y, z = spherical_to_cartesian(lon, lat, 1)
-            '''
-            try:
-                x, y, z = spherical_to_mercator(lon, lat, int(map_width), int(map_height))
-            except TypeError:
-                print "exiting, wrong lon/lat value found!"
-                print "coords: {}".format(coord)
-                break
-            '''
-            pt.setPosition((x, y, z))
-            poly.addVertex(pt)
+                if mercator_checked:
+                    x, y, z = spherical_to_mercator(lon, lat, map_width, map_height)
+                else:
+                    x, y, z = spherical_to_cartesian(lon, lat, 1)
+                '''
+                try:
+                    x, y, z = spherical_to_mercator(lon, lat, int(map_width), int(map_height))
+                except TypeError:
+                    print "exiting, wrong lon/lat value found!"
+                    print "coords: {}".format(coord)
+                    break
+                '''
+                pt.setPosition((x, y, z))
+                poly.addVertex(pt)
 
 print_header()
 main()
