@@ -61,14 +61,9 @@ def print_header():
 
 def main():
     
-    # 1. PARSING THE GEOJSON
-
     # load the geojson file
-    file_reader = open(file_path)
-    geojson = json.load(file_reader)
-    
-    # we have the data, close i/o
-    file_reader.close()
+    with open(file_path) as f:
+        geojson = json.load(f)
     
     # create the polygon that will host the points
     polygon = hou.Geometry.createPolygon(geo)
@@ -79,7 +74,7 @@ def main():
     # loop through geojson features in order to add points
     for index, feature in enumerate(geojson["features"][:]):
     
-        # Check if the user pressed Escape
+        # check if the user pressed Escape
         if hou.updateProgressAndCheckForInterrupt():
             break
             
@@ -163,14 +158,7 @@ def main():
                     x, y, z = spherical_to_mercator(lon, lat, map_width, map_height)
                 else:
                     x, y, z = spherical_to_cartesian(lon, lat, 1)
-                '''
-                try:
-                    x, y, z = spherical_to_mercator(lon, lat, int(map_width), int(map_height))
-                except TypeError:
-                    print "exiting, wrong lon/lat value found!"
-                    print "coords: {}".format(coord)
-                    break
-                '''
+
                 pt.setPosition((x, y, z))
                 poly.addVertex(pt)
 
