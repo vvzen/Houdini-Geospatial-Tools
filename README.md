@@ -1,2 +1,2 @@
 # houdini-geojson
-import GeoJSON into houdini
+just a quick snippet to import GeoJSON data into Houdini
