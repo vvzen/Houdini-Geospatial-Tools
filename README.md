@@ -1,7 +1,8 @@
 # houdini-geojson
 A OOP python library than enables you to easily create geometry in Houdini using GeoJSON data.
+This is just an hobby project (less than 1K LOCs at the time of writing) but I hope it can help someone out there.
 
-Tested under 17.5 and Python 2.7.
+Tested under Houdini 17.5 and Python 2.7.
 <br>
 No additional python packages required.
 
@@ -17,7 +18,7 @@ For more infos, see [https://www.sidefx.com/docs/houdini/hom/locations.html#disk
 # Example usage
 Create a Python node while in SOP,
  then create a `GeoJSONParser` instance like this:
- 
+
 ```
 import vv_geojson.geo_utils as vvgeoutils
 reload(vvgeoutils)
@@ -27,9 +28,21 @@ geojson_parser = vvgeoutils.GeoJSONParser(node.geometry(), geojson_path)
 geojson_parser.create_geo()
 ```
 
-# Supported Features
+You can also specify an optional radius of the final geometry:
+
+```
+geojson_parser.create_geo(radius=200)
+```
+
+# Supported GeoJSON Features
 - GeometryCollection
 - MultiPolygon
 - Polygon
 - MultiPoint
 - Point
+- LineString
+- MultiLineString ?
+
+
+# Where to get the data
+- https://geojson-maps.ash.ms
