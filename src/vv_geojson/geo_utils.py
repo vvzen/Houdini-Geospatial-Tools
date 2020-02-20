@@ -20,8 +20,21 @@ logging.basicConfig(
 logger = logging.getLogger('geo_utils')
 
 
-# see https://en.wikipedia.org/wiki/Spherical_coordinate_system
 def spherical_to_cartesian(lon, lat, radius):
+    """Converts from a spherical coordinate system to a cartesian one
+
+    :param lon: longitude
+    :type lon: float
+
+    :param lat: latitude
+    :type lat: float
+
+    :param radius: radius of the final globe
+    :type radius: float
+
+    :return: tuple of resulting x, y, z coordinates
+    :rtype: tuple
+    """
 
     latitude = math.radians(lat)
     longitude = math.radians(lon)
@@ -50,6 +63,11 @@ class GeoJSONParser(object):
         self._geojson_path = geojsonpath
         self._radius = 100
 
+        if not os.path.isfile(geojsonpath):
+            hou.ui.displayMessage('Please provide a path to an existing file,'
+                                  'not a directory!')
+            return
+
         if not os.path.exists(geojsonpath):
             hou.ui.displayMessage('Please provide a path to an existing file!')
             return
@@ -58,6 +76,11 @@ class GeoJSONParser(object):
             self.geojson = json.load(f)
 
     def set_radius(self, value):
+        if not isinstance(value, (float, int)):
+            hou.ui.displayMessage('Please provide a float or an '
+                                  'integer for the radius!')
+            return
+
         self._radius = value
 
     def _yield_features(self):
@@ -81,8 +104,8 @@ class GeoJSONParser(object):
 
         assert len(coordinates) == 2
 
-        lon = coordinates[0]
-        lat = coordinates[1]
+        lon, lat = coordinates
+
         point = self._node_geo.createPoint()
         x, y, z = spherical_to_cartesian(lon, lat, self._radius)
         point.setPosition((x, y, z))
@@ -94,6 +117,25 @@ class GeoJSONParser(object):
         for coordinate in coordinates:
             self._add_point(coordinate)
 
+    def add_line_string(self, coordinates):
+
+        logger.info('coordinates')
+        logger.info(coordinates)
+
+        poly = self._node_geo.createPolygon()
+        poly.setIsClosed(False)
+
+        for coordinate in coordinates:
+            pt = self._add_point(coordinate)
+
+            poly.addVertex(pt)
+
+    def add_multi_line_string(self, coordinates):
+        for coordinate in coordinates:
+            logger.info('coordinate')
+            logger.info(coordinate)
+            self.add_line_string(coordinate)
+
     def _add_polygon(self, poly):
 
         # create the polygon that will host the points
@@ -102,7 +144,6 @@ class GeoJSONParser(object):
         hou_polygon.setIsClosed(True)
 
         for ri, ring in enumerate(poly):
-            logger.info('adding ring %i ' % ri)
             for coordinates in ring:
                 point = self._add_point(coordinates)
                 hou_polygon.addVertex(point)
@@ -129,18 +170,23 @@ class GeoJSONParser(object):
             self._add_point(coordinates)
 
         elif featuretype == 'MultiLineString':
-            pass
+            self.add_multi_line_string(coordinates)
 
         elif featuretype == 'LineString':
-            pass
+            self.add_line_string(coordinates)
 
         elif featuretype == 'MultiPoint':
             self._add_multi_point(coordinates)
 
+        elif featuretype == 'Polygon':
+            self._add_polygon(coordinates)
+
         elif featuretype == 'MultiPolygon':
             self._add_multi_polygon(coordinates)
 
-    def create_geo(self):
+    def create_geo(self, radius=100):
+
+        self.set_radius(radius)
 
         _features = self.geojson.get('features')
         if not _features:
@@ -159,8 +205,9 @@ class GeoJSONParser(object):
                     logger.info('feature type: %s' % feature_type)
 
                     if not feature_type:
-                        hou.ui.displayMessage('The given GeoJSON has no features and ' +
-                                            'is not a GeometryCollection!')
+                        hou.ui.displayMessage(
+                            'The given GeoJSON has no features and ' +
+                            'is not a GeometryCollection!')
                         logger.error('Feature <type> field not found.')
                         continue
 
@@ -169,10 +216,6 @@ class GeoJSONParser(object):
             return
 
         for feature in self._yield_features():
-            # pp.pprint('index: %s, feature: %s\n' % (index, feature))
-
-            # attribs = feature["properties"]
-            # pp.pprint('properties: %s' % attribs)
 
             feature_type = feature["geometry"].get('type')
             logger.info('feature type: %s' % feature_type)
