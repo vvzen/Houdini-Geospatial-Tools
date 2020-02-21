@@ -46,3 +46,6 @@ geojson_parser.create_geo(radius=200)
 
 # Where to get the data
 - https://geojson-maps.ash.ms
+
+# Validate your data
+If you're getting weird results inside Houdini, please feel free top open an issue and add the source file that you're trying to import. If want to double check that you GeoJSON is written correctly I would suggest to use this website [http://geojson.io](http://geojson.io)
