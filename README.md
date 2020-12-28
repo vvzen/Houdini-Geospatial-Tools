@@ -19,7 +19,7 @@ For more infos, see [https://www.sidefx.com/docs/houdini/hom/locations.html#disk
 Create a Python node while in SOP,
  then create a `GeoJSONParser` instance like this:
 
-```
+```python
 import vv_geojson.geo_utils as vvgeoutils
 
 geojson_path = '~/Downloads/my_geographical_data.geojson'
