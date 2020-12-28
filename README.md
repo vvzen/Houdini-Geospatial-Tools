@@ -21,7 +21,6 @@ Create a Python node while in SOP,
 
 ```
 import vv_geojson.geo_utils as vvgeoutils
-reload(vvgeoutils)
 
 geojson_path = '~/Downloads/my_geographical_data.geojson'
 geojson_parser = vvgeoutils.GeoJSONParser(node.geometry(), geojson_path)
@@ -41,7 +40,7 @@ geojson_parser.create_geo(radius=200)
 - MultiPoint
 - Point
 - LineString
-- MultiLineString ?
+- MultiLineString (untested)
 
 
 # Where to get the data
