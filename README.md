@@ -1,4 +1,4 @@
-## houdini-geojson
+## src/vv-geojson
 A OOP python library than enables you to easily create geometry in Houdini using GeoJSON data.
 This is just an hobby project (less than 1K LOCs at the time of writing) but I hope it can help someone out there.
 
