@@ -1,5 +1,21 @@
+# Houdini Geospatial Tools
+
+This repos is a collection of unordered notebooks, scripts and libraries that I've used in the last years to work with geospatial data in Houdini.
+Please don't consider it as structured knowledge, it's more a formalized series of hacks that has proven useful enough to be reused in different dataviz projects.
+
+## src/notebooks
+
+`ipython` notebooks documenting different workflows.
+
+Each notebook might required different dependencies, but generally you'll always need at least `numpy` and `gdal`.
+
+### Save_GeoTIFF_as_ply
+
+Guides you from the loading of a (generally huge) DEM GeoTIFF to exporting samples of the elevation data, so that you don't have to deal with such a high resolution image if you don't need to.
+This can prove useful whenever you are still exploring the data and want to do your core processing inside numpy instead of houdini.
+
 ## src/vv-geojson
-A OOP python library than enables you to easily create geometry in Houdini using GeoJSON data.
+A very basic OOP python library than enables you to easily create geometry in Houdini by loading GeoJSON data.
 This is just an hobby project (less than 1K LOCs at the time of writing) but I hope it can help someone out there.
 
 Tested under Houdini 17.5 and Python 2.7.
