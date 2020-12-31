@@ -7,12 +7,16 @@ Please don't consider it as structured knowledge: it's just a formalized series 
 
 `ipython` notebooks documenting different workflows.
 
-Each notebook might required different dependencies, but generally you'll always need at least `numpy` and `gdal`.
+Each notebook might required different dependencies, but generally you'll always need at least:
+- `numpy==1.19.4`
+- `GDAL==3.2.0`
 
 ### Save_GeoTIFF_as_ply
 
 Guides you from the loading of a (generally huge) DEM GeoTIFF to exporting samples of the elevation data, so that you don't have to deal with such a high resolution image if you don't need to.
-This can prove useful whenever you are still exploring the data and want to do your core processing inside numpy instead of houdini.
+If you're in Europe, a good source of DEM files is Copernicus: https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1
+
+This can prove useful whenever you are exploring the data and want to do your core processing using numpy instead of houdini.
 
 ## src/vv-geojson
 A very basic OOP python library than enables you to easily create geometry in Houdini by loading GeoJSON data.
