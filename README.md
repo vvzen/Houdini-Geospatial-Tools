@@ -7,8 +7,9 @@ Please don't consider it as structured knowledge: it's just a formalized series 
 
 `ipython` notebooks documenting different workflows.
 
-Each notebook might required different dependencies, but generally you'll always need at least:
+Each notebook might require different dependencies, but generally you'll always need:
 - `numpy==1.19.4`
+- `matplotlib==3.3.3`
 - `GDAL==3.2.0`
 
 ### Save_GeoTIFF_as_ply
