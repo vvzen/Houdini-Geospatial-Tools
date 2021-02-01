@@ -3,6 +3,8 @@
 This repo is a collection of unordered notebooks, scripts and libraries that I've used in the last years to work with geospatial data in Houdini.
 Please don't consider it as structured knowledge: it's just a formalized series of hacks that has proven useful enough to be reused in different dataviz projects.
 
+A recap blog post is available here: http://valerioviperino.me/houdini/dem
+
 ## src/notebooks
 
 `ipython` notebooks documenting different workflows.
