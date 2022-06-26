@@ -17,7 +17,7 @@ logging.basicConfig(
         logging.StreamHandler()
     ])
 
-logger = logging.getLogger('geo_utils')
+logger = logging.getLogger('vv_geo_utils')
 
 
 def spherical_to_cartesian(lon, lat, radius):
@@ -63,13 +63,13 @@ class GeoJSONParser(object):
         self._geojson_path = geojsonpath
         self._radius = 100
 
+        if not os.path.exists(geojsonpath):
+            hou.ui.displayMessage('Please provide a path to an existing file!')
+            return
+
         if not os.path.isfile(geojsonpath):
             hou.ui.displayMessage('Please provide a path to an existing file,'
                                   'not a directory!')
-            return
-
-        if not os.path.exists(geojsonpath):
-            hou.ui.displayMessage('Please provide a path to an existing file!')
             return
 
         with open(geojsonpath) as f:
