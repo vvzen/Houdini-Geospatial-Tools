@@ -1,9 +1,10 @@
-use std::io::BufRead;
+use std::io::{BufRead, Write};
 use std::ops::{Add, Div, Mul, Sub};
 use std::path::PathBuf;
 
 use clap::Parser;
-use color_eyre::eyre;
+use color_eyre::eyre::{self, Context};
+use color_eyre::owo_colors::OwoColorize;
 use gdal::{raster::ResampleAlg, Metadata};
 use image::{Rgb, Rgb32FImage};
 
@@ -43,16 +44,16 @@ struct Cli {
     window_scale_factor: usize,
 }
 
-fn main() -> eyre::Result<()> {
-    let args = Cli::parse();
-
-    let export_dir = args.output_dir;
-
+fn export_dtm_to_exr(
+    in_image_path: PathBuf,
+    export_dir: PathBuf,
+    window_scale_factor: usize,
+    force_overwrite: bool,
+    normalize: bool,
+) -> eyre::Result<PathBuf> {
     std::fs::DirBuilder::new()
         .recursive(true)
         .create(&export_dir)?;
-
-    let in_image_path = args.input_dtm;
 
     let dataset = gdal::Dataset::open(&in_image_path)?;
 
@@ -71,13 +72,13 @@ fn main() -> eyre::Result<()> {
 
     let num_bands = dataset.raster_count();
 
-    println!(
-        "This {} is in '{}' and has {num_bands} bands.",
+    log::info!(
+        "This {} is in '{}' and has {num_bands} band(s).",
         dataset.driver().long_name(),
         dataset.spatial_ref()?.name()?,
     );
 
-    println!("\tRaster size: {raster_w}x{raster_h}");
+    log::info!("Raster size: {raster_w}x{raster_h}");
 
     // Let's try to read a small portion of this image
     // (NOTE: bands are 1-indexed)
@@ -87,27 +88,29 @@ fn main() -> eyre::Result<()> {
         // Depending on the file, the description field may be the empty string :(
         let description = band.description()?;
         if !description.is_empty() {
-            println!("\tDescription: '{description}'");
+            log::info!("\tDescription: '{description}'");
         }
 
         let stats = band.compute_raster_min_max(true)?;
-        println!("\tBand min: {}, max: {}", stats.min, stats.max);
+        log::info!("Band min: {}, max: {}", stats.min, stats.max);
+
+        log::info!("Processing image..");
 
         // In GDAL, all no-data values are coerced to floating point types, regardless of the
         // underlying pixel type.
-        println!("\tNo-data value: {:?}", band.no_data_value());
-        println!("\tPixel data type: {}", band.band_type());
+        log::debug!("No-data value: {:?}", band.no_data_value());
+        log::debug!("Pixel data type: {}", band.band_type());
 
         // How much do we read at each iteration
-        let region_size_w = raster_w / args.window_scale_factor;
-        let region_size_h = raster_h / args.window_scale_factor;
+        let region_size_w = raster_w / window_scale_factor;
+        let region_size_h = raster_h / window_scale_factor;
 
         // Downsampling factor (doesn't work right now, so keep it as 1)
         let resize_factor = 1;
 
         for x_offset in (0..raster_w).step_by(region_size_w) {
             for z_offset in (0..raster_h).step_by(region_size_h) {
-                println!("");
+                log::debug!("");
 
                 // In GDAL you can read arbitrary regions of the raster, and have them up- or down-sampled
                 // when the output buffer size is different from the read size. The terminology GDAL
@@ -132,8 +135,8 @@ fn main() -> eyre::Result<()> {
                     region_to_read_h = region_size_h;
                 }
 
-                println!("\tOffset: {x_offset}x{z_offset}");
-                println!("\tRegion: {region_to_read_w}x{region_to_read_h}");
+                log::debug!("\tOffset: {x_offset}x{z_offset}");
+                log::debug!("\tRegion: {region_to_read_w}x{region_to_read_h}");
 
                 // How much we should read
                 let window_size = (region_to_read_w as usize, region_to_read_h as usize);
@@ -149,8 +152,8 @@ fn main() -> eyre::Result<()> {
                 let rv =
                     band.read_as::<f32>(window, window_size, output_size, Some(resample_algo))?;
 
-                println!("\tData size:   {:?}", rv.size);
-                // println!("\tData values: {:?} ({})", rv.data, rv.data.len());
+                log::debug!("\tData size:   {:?}", rv.size);
+                // log::debug!("\tData values: {:?} ({})", rv.data, rv.data.len());
 
                 // Take N at a time horizontally
                 for (c, chunk) in rv.data.chunks(region_to_read_w).enumerate() {
@@ -159,7 +162,7 @@ fn main() -> eyre::Result<()> {
                     for (i, value) in chunk.iter().enumerate() {
                         let x = x_offset + i;
 
-                        let bw_color = match args.normalize {
+                        let bw_color = match normalize {
                             true => {
                                 map_range((stats.min, stats.max), (0.0, 1.0), *value as f64) as f32
                             }
@@ -177,11 +180,11 @@ fn main() -> eyre::Result<()> {
         }
     }
 
-    println!("Writing image to disk..");
+    log::debug!("Writing image to disk..");
 
     // Ask for confirmation
-    if !args.yes && output_image_path.exists() {
-        eprintln!("File exists, do you want to override it? y/n");
+    if !force_overwrite && output_image_path.exists() {
+        log::debug!("File exists, do you want to override it? y/n");
 
         let mut lock = std::io::stdin().lock();
         let mut answer = String::new();
@@ -199,7 +202,50 @@ fn main() -> eyre::Result<()> {
     }
 
     output_image.save(&output_image_path)?;
-    println!("Image written to {}", output_image_path.display());
+
+    Ok(output_image_path)
+}
+
+fn main() -> eyre::Result<()> {
+    // Install the error handlers by eyre
+    color_eyre::install()?;
+
+    // Enable Log info by default, unless the client has other preferences
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "info");
+    }
+
+    env_logger::builder()
+        .format(|buf, record| {
+            let style = match record.level() {
+                log::Level::Warn => color_eyre::owo_colors::Style::new().yellow(),
+                log::Level::Error => color_eyre::owo_colors::Style::new().bold().red(),
+                _ => color_eyre::owo_colors::Style::new().white(),
+            };
+
+            writeln!(
+                buf,
+                "| {} | {}",
+                record.level().style(style),
+                record.args().style(style)
+            )
+        })
+        .init();
+
+    let args = Cli::parse();
+    let export_dir = args.output_dir;
+    let in_image_path = args.input_dtm;
+
+    let output_image_path = export_dtm_to_exr(
+        in_image_path,
+        export_dir,
+        args.window_scale_factor,
+        args.yes,
+        args.normalize,
+    )
+    .context("Failed to export OpenEXR image")?;
+
+    log::info!("Image written to {}", output_image_path.display());
 
     Ok(())
 }
