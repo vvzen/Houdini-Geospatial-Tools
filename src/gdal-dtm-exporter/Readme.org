@@ -1,0 +1,22 @@
+#+title: Readme
+
+* Prerequisites
+
+~gdal~ needs to be in your PKG_CONFIG_PATH.
+
+If you're on Arch (or similar) and don't mind installing things globally on your system, you can just do:
+
+#+begin_src bash
+sudo pacman -Syu gdal
+#+end_src
+
+Then you'll probably also need a few extra packages as runtime dependencies (see https://github.com/OSGeo/gdal/issues/6281 and https://bugs.archlinux.org/task/75749 to know why, this is a quirk just on Arch) :
+
+~sudo pacman -Syu arrow podofo libpqxx~
+
+I'm pretty sure ~gdal~ is packaged on other OSes too: for example via ~brew~ on macOS. In alternative, consider creating a ~conda~ environment and installing there.
+
+* Where to find DTM maps
+
+You can find a lot of great Digital Terrain Models here:
+https://www.uahirise.org/dtm/ESP_026170_1990
