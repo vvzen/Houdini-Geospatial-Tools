@@ -11,7 +11,7 @@ This simple CLI takes a .IMG Digital Terrain Model as input and spits out a 32bi
 This is written in Rust and uses the `GDAL` bindings, so you'll need both `cargo` and `gdal` installed.
 See the `Readme.org` for more info.
 
-## src/notebooks
+## python/notebooks
 
 `ipython` notebooks documenting different workflows.
 
@@ -27,7 +27,7 @@ If you're in Europe, a good source of DEM files is Copernicus: https://land.cope
 
 This can prove useful whenever you are exploring the data and want to do your core processing using numpy instead of houdini.
 
-## src/vv-geojson
+## python/vv-geojson
 A very basic OOP python library than enables you to easily create geometry in Houdini by loading GeoJSON data.
 This is just an hobby project (less than 1K LOCs at the time of writing) but I hope it can help someone out there.
 
@@ -38,7 +38,7 @@ No additional python packages required.
 ### Installation
 Simply make this module available to your $PYTHONPATH in houdini.
 
-One way to do this is to copy the `src/vv_geojson` folder (which contains the python package) to `$HOUDINI_USER_PREF_DIR/python2.7libs`.
+One way to do this is to copy the `python/vv_geojson` folder (which contains the python package) to `$HOUDINI_USER_PREF_DIR/python2.7libs`.
 
 If you're on mac, `$HOUDINI_USER_PREF_DIR/python2.7libs` could become `/Users/$USER/Library/Preferences/houdini/17.5/python2.7libs`.
 
