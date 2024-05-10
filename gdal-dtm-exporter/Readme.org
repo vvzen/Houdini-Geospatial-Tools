@@ -2,6 +2,7 @@
 
 * Prerequisites
 
+** Building
 ~gdal~ needs to be in your PKG_CONFIG_PATH.
 
 If you're on Arch (or similar) and don't mind installing things globally on your system, you can just do:
@@ -9,6 +10,8 @@ If you're on Arch (or similar) and don't mind installing things globally on your
 #+begin_src bash
 sudo pacman -Syu gdal
 #+end_src
+
+** Running
 
 Then you'll probably also need a few extra packages as runtime dependencies (see https://github.com/OSGeo/gdal/issues/6281 and https://bugs.archlinux.org/task/75749 to know why, this is a quirk just on Arch) :
 
