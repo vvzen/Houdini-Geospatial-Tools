@@ -1,31 +1,9 @@
 use std::ops::{Add, Div, Mul, Sub};
-use std::{
-    io::Write,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use color_eyre::eyre;
 use gdal::{raster::ResampleAlg, Metadata};
 use image::{Rgb, Rgb32FImage};
-
-const PLY_HEADER: &str = include_str!("../assets/ply_header.txt");
-
-#[derive(Debug)]
-struct Point {
-    x: f32,
-    y: f32,
-    z: f32,
-}
-
-impl Point {
-    fn new(x: f32, y: f32, z: f32) -> Self {
-        Self { x, y, z }
-    }
-
-    fn as_ply_line(&self) -> String {
-        format!("{} {} {}\n", self.x, self.y, self.z)
-    }
-}
 
 /// Map a value from one range to another
 /// Taken from https://rosettacode.org/wiki/Map_range#Rust
@@ -34,31 +12,6 @@ where
     T: Add<T, Output = T> + Sub<T, Output = T> + Mul<T, Output = T> + Div<T, Output = T>,
 {
     to_range.0 + (s - from_range.0) * (to_range.1 - to_range.0) / (from_range.1 - from_range.0)
-}
-
-fn write_ply_header(file_path: impl AsRef<Path>, num_vertices: usize) -> eyre::Result<()> {
-    let nv = format!("{num_vertices}");
-    let content = PLY_HEADER.replace("{num_vertices}", &nv);
-
-    std::fs::write(file_path, content)?;
-
-    Ok(())
-}
-
-fn write_ply_chunk(file_path: impl AsRef<Path>, points: &[Point]) -> eyre::Result<()> {
-    let mut buffer = String::new();
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .append(true)
-        .open(file_path)?;
-
-    for pt in points.iter() {
-        buffer.push_str(&pt.as_ply_line());
-    }
-
-    file.write(buffer.as_bytes())?;
-
-    Ok(())
 }
 
 fn main() -> eyre::Result<()> {
@@ -72,10 +25,6 @@ fn main() -> eyre::Result<()> {
         PathBuf::from("/home/vv/3d/mars-nasa-dem/DTEEC_026170_1990_026236_1990_A01.IMG");
 
     let dataset = gdal::Dataset::open(in_image_path)?;
-
-    // For the 3d export
-    let mut points = Vec::new();
-    let output_mesh_path = export_dir.join("test_resized.ply");
 
     // For the 2d export
     let (raster_w, raster_h) = dataset.raster_size();
@@ -118,9 +67,6 @@ fn main() -> eyre::Result<()> {
 
         // Downsampling factor (doesn't work right now, so keep it as 1)
         let resize_factor = 1;
-
-        // Just for dramatic effect / debugging
-        let y_scale = 1.0;
 
         for x_offset in (0..raster_w).step_by(region_size_w) {
             for z_offset in (0..raster_h).step_by(region_size_h) {
@@ -176,32 +122,15 @@ fn main() -> eyre::Result<()> {
                     for (i, value) in chunk.iter().enumerate() {
                         let x = x_offset + i;
 
-                        // For the 3d export
-                        let pt = Point::new(x as f32, (*value) as f32 * y_scale, z as f32);
-
-                        // For the 2d export
                         let bw =
                             map_range((stats.min, stats.max), (0.0, 1.0), *value as f64) as f32;
 
                         output_image.put_pixel(x as u32, z as u32, Rgb([bw, bw, bw]));
-
-                        points.push(pt);
                     }
                 }
             }
         }
-
-        println!("\tNum points collected: {}", points.len());
     }
-
-    println!("Writing file to disk..");
-    write_ply_header(&output_mesh_path, points.len())?;
-
-    let chunk_size = 1000;
-    for (_c, chunk) in points.chunks(chunk_size).enumerate() {
-        write_ply_chunk(&output_mesh_path, &chunk)?;
-    }
-    println!("File written to {}", output_mesh_path.display());
 
     println!("Writing image to disk..");
     output_image.save(&output_image_path)?;
