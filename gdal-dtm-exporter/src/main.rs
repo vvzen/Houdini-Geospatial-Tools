@@ -1,6 +1,8 @@
+use std::io::BufRead;
 use std::ops::{Add, Div, Mul, Sub};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
+use clap::Parser;
 use color_eyre::eyre;
 use gdal::{raster::ResampleAlg, Metadata};
 use image::{Rgb, Rgb32FImage};
@@ -14,23 +16,58 @@ where
     to_range.0 + (s - from_range.0) * (to_range.1 - to_range.0) / (from_range.1 - from_range.0)
 }
 
+#[derive(Parser)]
+#[command(version, about)]
+struct Cli {
+    /// Input path pointing to the Digital Terrain Model file
+    #[arg(short, long)]
+    input_dtm: PathBuf,
+
+    /// Output directory where the OpenEXR file will be exported
+    #[arg(short, long)]
+    output_dir: PathBuf,
+
+    /// Normalizes the pixel values to be in the [0, 1] range.
+    #[arg(short, long)]
+    normalize: bool,
+
+    /// Always override the output image if it already exists.
+    #[arg(short, long)]
+    yes: bool,
+
+    /// This can be used to lower memory consumption.
+    /// Higher values will result in the CLI using smaller windows
+    /// when accessing the data of the DTM, while a value of 1 will read
+    /// the entire image at once.
+    #[arg(short, long, default_value_t = 10)]
+    window_scale_factor: usize,
+}
+
 fn main() -> eyre::Result<()> {
-    let export_dir = PathBuf::from("/home/vv/3d/mars-nasa-dem");
+    let args = Cli::parse();
+
+    let export_dir = args.output_dir;
 
     std::fs::DirBuilder::new()
         .recursive(true)
         .create(&export_dir)?;
 
-    let in_image_path =
-        PathBuf::from("/home/vv/3d/mars-nasa-dem/DTEEC_026170_1990_026236_1990_A01.IMG");
+    let in_image_path = args.input_dtm;
 
-    let dataset = gdal::Dataset::open(in_image_path)?;
+    let dataset = gdal::Dataset::open(&in_image_path)?;
 
     // For the 2d export
     let (raster_w, raster_h) = dataset.raster_size();
 
     let mut output_image = Rgb32FImage::new(raster_w as u32, raster_h as u32);
-    let output_image_path = export_dir.join("test_export.exr");
+    let output_image_path = export_dir
+        .join(
+            in_image_path
+                .file_stem()
+                .ok_or("Input path didn't have a file name")
+                .map_err(eyre::Error::msg)?,
+        )
+        .with_extension("exr");
 
     let num_bands = dataset.raster_count();
 
@@ -62,8 +99,8 @@ fn main() -> eyre::Result<()> {
         println!("\tPixel data type: {}", band.band_type());
 
         // How much do we read at each iteration
-        let region_size_w = raster_w / 100;
-        let region_size_h = raster_h / 100;
+        let region_size_w = raster_w / args.window_scale_factor;
+        let region_size_h = raster_h / args.window_scale_factor;
 
         // Downsampling factor (doesn't work right now, so keep it as 1)
         let resize_factor = 1;
@@ -122,10 +159,18 @@ fn main() -> eyre::Result<()> {
                     for (i, value) in chunk.iter().enumerate() {
                         let x = x_offset + i;
 
-                        let bw =
-                            map_range((stats.min, stats.max), (0.0, 1.0), *value as f64) as f32;
+                        let bw_color = match args.normalize {
+                            true => {
+                                map_range((stats.min, stats.max), (0.0, 1.0), *value as f64) as f32
+                            }
+                            false => *value as f32,
+                        };
 
-                        output_image.put_pixel(x as u32, z as u32, Rgb([bw, bw, bw]));
+                        output_image.put_pixel(
+                            x as u32,
+                            z as u32,
+                            Rgb([bw_color, bw_color, bw_color]),
+                        );
                     }
                 }
             }
@@ -133,6 +178,26 @@ fn main() -> eyre::Result<()> {
     }
 
     println!("Writing image to disk..");
+
+    // Ask for confirmation
+    if !args.yes && output_image_path.exists() {
+        eprintln!("File exists, do you want to override it? y/n");
+
+        let mut lock = std::io::stdin().lock();
+        let mut answer = String::new();
+
+        lock.read_line(&mut answer)?;
+
+        let answer = match answer.strip_suffix("\n") {
+            Some(v) => v,
+            None => &answer,
+        };
+
+        if answer == "n" || answer == "no" {
+            eyre::bail!("User decided to not override: aborting.");
+        }
+    }
+
     output_image.save(&output_image_path)?;
     println!("Image written to {}", output_image_path.display());
 
