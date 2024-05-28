@@ -98,7 +98,7 @@ impl eframe::App for MyApp {
                 Some(UserAction::Picked) => {
                     if let Some(picked_path) = &self.picked_path {
                         ui.horizontal(|ui| {
-                            ui.label("Picked file:");
+                            ui.label("Input file:");
                             ui.monospace(picked_path);
                         });
 
@@ -116,36 +116,16 @@ impl eframe::App for MyApp {
                 // Show dropped files (if any)
                 Some(UserAction::Dropped) => {
                     // TODO: Find a nice way to shortcircuit
-                    if !self.dropped_files.is_empty() {
+                    let last_file = self.dropped_files.last();
+
+                    if let Some(file) = last_file {
+                        // TODO: No unwraps
+                        self.input_file = file.path.as_ref().cloned().unwrap().to_path_buf();
+
                         ui.group(|ui| {
                             ui.label("Dropped files:");
-
-                            for file in &self.dropped_files {
-                                let info = match &file.path {
-                                    Some(path) => {
-                                        if let Some(name) = path.file_name() {
-                                            name.to_string_lossy().to_string()
-                                        } else {
-                                            "???".to_owned()
-                                        }
-                                    }
-                                    None => "???".to_owned(),
-                                };
-
-                                ui.label(info);
-                            }
+                            ui.label(format!("{}", self.input_file.display()));
                         });
-
-                        // Only use the last file
-                        self.input_file = self
-                            .dropped_files
-                            .last()
-                            .unwrap()
-                            .path
-                            .as_ref()
-                            .cloned()
-                            .unwrap()
-                            .to_path_buf();
                     }
                 }
                 _ => {}
@@ -157,7 +137,6 @@ impl eframe::App for MyApp {
                 });
             }
 
-            // TODO: Output file path dialog ?
             egui::CollapsingHeader::new("Conversion Options")
                 .default_open(true)
                 .show(ui, |ui| {
