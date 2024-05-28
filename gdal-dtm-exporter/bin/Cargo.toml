@@ -1,14 +1,15 @@
 [package]
-name = "gdal-dtm-exporter-lib"
+name = "gdal-dtm-exporter-bin"
 version = "0.1.0"
 edition = "2021"
-description = "Library to export OpenEXR images from DTM elevation files."
 
-[lib]
-name = "gdal_dtm_exporter_lib"
-path = "src/mod.rs"
+[[bin]]
+name = "gdal-dtm-exporter"
+path = "src/main.rs"
 
 [dependencies]
+gdal-dtm-exporter-lib = { path = "../lib" }
+
 clap = { version = "4.5.4", features = ["derive"] }
 color-eyre = "0.6.3"
 env_logger = "0.11.3"

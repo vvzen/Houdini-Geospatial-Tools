@@ -1,15 +1,15 @@
 [workspace]
 resolver = "2"
 members = [
-    "gdal-dtm-exporter-bin",
-    "gdal-dtm-exporter-lib",
-    "gdal-dtm-exporter-gui",
+    "bin",
+    "lib",
+    "gui",
 ]
 
 default-members = [
-    "gdal-dtm-exporter-bin",
-    "gdal-dtm-exporter-lib",
-    "gdal-dtm-exporter-gui",
+    "bin",
+    "lib",
+    "gui",
 ]
 
 [workspace.package]
