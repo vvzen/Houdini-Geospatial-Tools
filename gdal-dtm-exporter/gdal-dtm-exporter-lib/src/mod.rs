@@ -1,10 +1,8 @@
-use std::io::{BufRead, Write};
+use std::io::BufRead;
 use std::ops::{Add, Div, Mul, Sub};
 use std::path::PathBuf;
 
-use clap::Parser;
-use color_eyre::eyre::{self, Context};
-use color_eyre::owo_colors::OwoColorize;
+use color_eyre::eyre;
 use gdal::{raster::ResampleAlg, Metadata};
 use image::{Rgb, Rgb32FImage};
 
@@ -17,36 +15,9 @@ where
     to_range.0 + (s - from_range.0) * (to_range.1 - to_range.0) / (from_range.1 - from_range.0)
 }
 
-#[derive(Parser)]
-#[command(version, about)]
-struct Cli {
-    /// Input path pointing to the Digital Terrain Model file
-    #[arg(short, long)]
-    input_dtm: PathBuf,
-
-    /// Output directory where the OpenEXR file will be exported
-    #[arg(short, long)]
-    output_dir: PathBuf,
-
-    /// Normalizes the pixel values to be in the [0, 1] range.
-    #[arg(short, long)]
-    normalize: bool,
-
-    /// Always override the output image if it already exists.
-    #[arg(short, long)]
-    yes: bool,
-
-    /// This can be used to lower memory consumption.
-    /// Higher values will result in the CLI using smaller windows
-    /// when accessing the data of the DTM, while a value of 1 will read
-    /// the entire image at once.
-    #[arg(short, long, default_value_t = 10)]
-    window_scale_factor: usize,
-}
-
-fn export_dtm_to_exr(
-    in_image_path: PathBuf,
-    export_dir: PathBuf,
+pub fn export_dtm_to_exr(
+    in_image_path: &PathBuf,
+    export_dir: &PathBuf,
     window_scale_factor: usize,
     force_overwrite: bool,
     normalize: bool,
@@ -109,7 +80,7 @@ fn export_dtm_to_exr(
         let resize_factor = 1;
 
         for x_offset in (0..raster_w).step_by(region_size_w) {
-            for z_offset in (0..raster_h).step_by(region_size_h) {
+            for y_offset in (0..raster_h).step_by(region_size_h) {
                 log::debug!("");
 
                 // In GDAL you can read arbitrary regions of the raster, and have them up- or down-sampled
@@ -117,7 +88,7 @@ fn export_dtm_to_exr(
                 // uses takes getting used to. All parameters here are in pixel coordinates.
                 // Also note, tuples are in `(x, y) / (cols, rows)` order.
                 // `window` is the (x, y) coordinate of the upper left corner of the region to read.
-                let window = (x_offset as isize, z_offset as isize);
+                let window = (x_offset as isize, y_offset as isize);
 
                 let region_to_read_w;
                 let region_to_read_h;
@@ -129,13 +100,13 @@ fn export_dtm_to_exr(
                     region_to_read_w = region_size_w;
                 }
 
-                if z_offset >= raster_h - region_size_h {
-                    region_to_read_h = raster_h - z_offset;
+                if y_offset >= raster_h - region_size_h {
+                    region_to_read_h = raster_h - y_offset;
                 } else {
                     region_to_read_h = region_size_h;
                 }
 
-                log::debug!("\tOffset: {x_offset}x{z_offset}");
+                log::debug!("\tOffset: {x_offset}x{y_offset}");
                 log::debug!("\tRegion: {region_to_read_w}x{region_to_read_h}");
 
                 // How much we should read
@@ -157,7 +128,7 @@ fn export_dtm_to_exr(
 
                 // Take N at a time horizontally
                 for (c, chunk) in rv.data.chunks(region_to_read_w).enumerate() {
-                    let z = z_offset + c;
+                    let y = y_offset + c;
 
                     for (i, value) in chunk.iter().enumerate() {
                         let x = x_offset + i;
@@ -171,7 +142,7 @@ fn export_dtm_to_exr(
 
                         output_image.put_pixel(
                             x as u32,
-                            z as u32,
+                            y as u32,
                             Rgb([bw_color, bw_color, bw_color]),
                         );
                     }
@@ -204,48 +175,4 @@ fn export_dtm_to_exr(
     output_image.save(&output_image_path)?;
 
     Ok(output_image_path)
-}
-
-fn main() -> eyre::Result<()> {
-    // Install the error handlers by eyre
-    color_eyre::install()?;
-
-    // Enable Log info by default, unless the client has other preferences
-    if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "info");
-    }
-
-    env_logger::builder()
-        .format(|buf, record| {
-            let style = match record.level() {
-                log::Level::Warn => color_eyre::owo_colors::Style::new().yellow(),
-                log::Level::Error => color_eyre::owo_colors::Style::new().bold().red(),
-                _ => color_eyre::owo_colors::Style::new().white(),
-            };
-
-            writeln!(
-                buf,
-                "| {} | {}",
-                record.level().style(style),
-                record.args().style(style)
-            )
-        })
-        .init();
-
-    let args = Cli::parse();
-    let export_dir = args.output_dir;
-    let in_image_path = args.input_dtm;
-
-    let output_image_path = export_dtm_to_exr(
-        in_image_path,
-        export_dir,
-        args.window_scale_factor,
-        args.yes,
-        args.normalize,
-    )
-    .context("Failed to export OpenEXR image")?;
-
-    log::info!("Image written to {}", output_image_path.display());
-
-    Ok(())
 }
