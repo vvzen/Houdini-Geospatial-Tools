@@ -140,9 +140,7 @@ impl eframe::App for MyApp {
             egui::CollapsingHeader::new("Conversion Options")
                 .default_open(true)
                 .show(ui, |ui| {
-                    // Output dir
                     ui.label("Output directory");
-
                     ui.text_edit_singleline(&mut self.output_dir);
 
                     ui.checkbox(&mut self.normalize, "Normalize")
@@ -163,11 +161,6 @@ impl eframe::App for MyApp {
                         1.0..=100.0,
                     ))
                     .on_hover_text(wsf_tooltip);
-
-                    ui.add(egui::widgets::Slider::new(
-                        &mut self.window_scale_factor,
-                        1.0..=100.0,
-                    ));
                 });
 
             // Run conversion
