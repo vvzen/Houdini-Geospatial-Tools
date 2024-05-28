@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-gdal-dtm-exporter-lib = { path = "../gdal-dtm-exporter-lib" }
+gdal-dtm-exporter-lib = { path = "../lib" }
 eframe = { version = "0.27.2", features = ["default"] }
 env_logger = "0.11.3"
 humansize = "2.1.3"
