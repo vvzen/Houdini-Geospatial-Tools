@@ -36,7 +36,12 @@ enum UserAction {
     Picked,
 }
 
-#[derive(Default)]
+enum ConversionStatus {
+    NotStarted,
+    InProgress,
+    Finished,
+}
+
 struct MyApp {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
@@ -47,10 +52,15 @@ struct MyApp {
     normalize: bool,
     overwrite_output: bool,
     window_scale_factor: f32,
+    channel_tx: std::sync::mpsc::SyncSender<bool>,
+    channel_rx: std::sync::mpsc::Receiver<bool>,
+    conversion_status: ConversionStatus,
 }
 
 impl MyApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+        let (tx, rx) = std::sync::mpsc::channel();
+
         Self {
             dropped_files: Vec::new(),
             picked_path: None,
@@ -61,6 +71,9 @@ impl MyApp {
             window_scale_factor: 10.0,
             input_file: PathBuf::default(),
             output_dir: String::from("/tmp"),
+            channel_tx: tx,
+            channel_rx: rx,
+            conversion_status: ConversionStatus::NotStarted,
         }
     }
 }
@@ -166,24 +179,86 @@ impl eframe::App for MyApp {
             // Run conversion
             ui.add_space(PADDING_SIZE);
 
-            if ui.button("Export to OpenEXR").clicked() {
-                log::info!("Converting {} ..", self.input_file.display());
+            let tx = self.channel_tx.clone();
 
-                let output_dir = PathBuf::from(&self.output_dir);
+            match self.conversion_status {
+                ConversionStatus::NotStarted | ConversionStatus::Finished => {
+                    let export_button = ui.button("Export to OpenEXR");
 
-                match export_dtm_to_exr(
-                    &self.input_file,
-                    &output_dir,
-                    self.window_scale_factor as usize,
-                    self.overwrite_output,
-                    self.normalize,
-                ) {
-                    Ok(v) => {
-                        log::info!("Export done to {}", v.display());
+                    if export_button.clicked() {
+                        log::info!("Converting {} ..", self.input_file.display());
+
+                        let output_dir = PathBuf::from(&self.output_dir);
+                        let input_file = self.input_file.clone();
+                        let wsf = self.window_scale_factor.clone();
+                        let overwrite_output = self.overwrite_output.clone();
+                        let normalize = self.normalize.clone();
+
+                        if !input_file.exists() {
+                            ui.label(format!(
+                                "Input file doesn't exist: {}",
+                                input_file.display()
+                            ));
+                            return;
+                        }
+
+                        self.conversion_status = ConversionStatus::InProgress;
+
+                        // Perform the conversion in a separate thread
+                        std::thread::spawn(move || {
+                            log::info!("Spawned thread to do the processing..");
+
+                            let result = match export_dtm_to_exr(
+                                &input_file,
+                                &output_dir,
+                                wsf as usize,
+                                overwrite_output,
+                                normalize,
+                            ) {
+                                Ok(v) => {
+                                    log::info!("Export done to {}", v.display());
+                                    true
+                                }
+                                Err(e) => {
+                                    log::error!("{e}");
+                                    false
+                                }
+                            };
+
+                            log::info!("Sending from thread..");
+
+                            if let Err(e) = tx.send(result) {
+                                log::error!("Failed to send from thread: {e}");
+                            }
+
+                            log::info!("About to exit from thread..");
+                        });
                     }
-                    Err(e) => {
-                        log::error!("{e}");
+
+                    if matches!(self.conversion_status, ConversionStatus::Finished) {
+                        ui.horizontal(|ui| {
+                            ui.label("Conversion completed!");
+                        });
                     }
+                }
+
+                ConversionStatus::InProgress => {
+                    // Constantly check if it's over
+                    match self.channel_rx.try_recv() {
+                        Ok(stuff) => {
+                            self.conversion_status = ConversionStatus::Finished;
+                            log::info!("Received stuff: {stuff}");
+                        }
+                        Err(e) => {
+                            if e != std::sync::mpsc::TryRecvError::Empty {
+                                log::error!("Failed to receive from thread: {e}");
+                            }
+                        }
+                    }
+
+                    ui.horizontal(|ui| {
+                        ui.label("Conversion in progress..");
+                    });
                 }
             }
         });
