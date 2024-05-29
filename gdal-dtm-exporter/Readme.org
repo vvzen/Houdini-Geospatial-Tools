@@ -3,6 +3,7 @@
 * Prerequisites
 
 ** Building
+
 ~gdal~ needs to be in your PKG_CONFIG_PATH.
 
 If you're on Arch (or similar) and don't mind installing things globally on your system, you can just do:
@@ -11,13 +12,17 @@ If you're on Arch (or similar) and don't mind installing things globally on your
 sudo pacman -Syu gdal
 #+end_src
 
+
+I'm pretty sure ~gdal~ is packaged on other OSes too: for example via ~brew~ on macOS.
+On macOS, you should be able to just run ~brew install gdal~, provided you have ~brew~ installed.
+
+I don't know about Windows since I've stopping using it 10 years ago probably.
+
 ** Running
 
-Then you'll probably also need a few extra packages as runtime dependencies (see https://github.com/OSGeo/gdal/issues/6281 and https://bugs.archlinux.org/task/75749 to know why, this is a quirk just on Arch) :
+On Arch, other than ~gdal~, you'll probably also need a few extra packages as runtime dependencies (see https://github.com/OSGeo/gdal/issues/6281 and https://bugs.archlinux.org/task/75749 to know why, this is a quirk just on Arch) :
 
 ~sudo pacman -Syu arrow podofo libpqxx~
-
-I'm pretty sure ~gdal~ is packaged on other OSes too: for example via ~brew~ on macOS. In alternative, consider creating a ~conda~ environment and installing there.
 
 * Where to find DTM maps
 
