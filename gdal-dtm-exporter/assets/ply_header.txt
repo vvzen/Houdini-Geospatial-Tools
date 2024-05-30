@@ -1,8 +1,0 @@
-ply
-format ascii 1.0
-comment made by vvzen
-element vertex {num_vertices}
-property float x
-property float y
-property float z
-end_header
