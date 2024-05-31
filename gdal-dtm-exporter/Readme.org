@@ -1,8 +1,8 @@
 #+title: Readme
 
-* Prerequisites
+** Prerequisites
 
-** Building
+*** Build-time dependencies
 
 ~gdal~ needs to be in your PKG_CONFIG_PATH.
 
@@ -18,13 +18,30 @@ On macOS, you should be able to just run ~brew install gdal~, provided you have 
 
 I don't know about Windows since I've stopping using it 10 years ago probably.
 
-** Running
+*** Run-time Dependencies
 
 On Arch, other than ~gdal~, you'll probably also need a few extra packages as runtime dependencies (see https://github.com/OSGeo/gdal/issues/6281 and https://bugs.archlinux.org/task/75749 to know why, this is a quirk just on Arch) :
 
 ~sudo pacman -Syu arrow podofo libpqxx~
 
-* Where to find DTM maps
+*** Installing and running
+
+To build the Cargo CLI, you can do:
+
+#+begin_src bash :noeval
+cargo build -p gdal-dtm-exporter-bin --release
+#+end_src
+
+Then you can just take the CLI generated under ~target/release/gdal-dtm-exporter~ and to put it in your $PATH.
+
+To run the GUI, you can do:
+
+#+begin_src bash :noeval
+cargo run -p gdal-dtm-exporter-gui --release
+#+end_src
+
+
+** Where to find DTM maps
 
 You can find a lot of great Digital Terrain Models here:
 https://www.uahirise.org/dtm/ESP_026170_1990
