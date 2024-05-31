@@ -59,7 +59,7 @@ struct MyApp {
 
 impl MyApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, rx) = std::sync::mpsc::sync_channel(1);
 
         Self {
             dropped_files: Vec::new(),
