@@ -16,7 +16,7 @@ logging.basicConfig(
         logging.StreamHandler()
     ])
 
-logger = logging.getLogger('geo_utils')
+log = logging.getLogger('geo_utils')
 
 IntOrFloat: TypeAlias = Union[int, float]
 
@@ -95,11 +95,11 @@ class GeoJSONParser:
     def _get_geometry(self, typename, feature):
         geometry = feature.get('geometry')
         if not geometry:
-            logger.error('No geometry found for current feature')
+            log.error('No geometry found for current feature')
             return
 
         if geometry.get('type') != typename:
-            logger.error(
+            log.error(
                 'No %s geo found inside %s feature' % (typename, typename))
             return
 
@@ -150,18 +150,18 @@ class GeoJSONParser:
     def _add_multi_polygon(self, coordinates):
 
         # TODO: check for inner holes
-        logger.info('adding MultiPolygon')
+        log.info('adding MultiPolygon')
 
         for pi, polygon in enumerate(coordinates):
-            logger.info('adding polygon %i ' % pi)
-            logger.info(polygon)
+            log.info('adding polygon %i ' % pi)
+            log.info(polygon)
             self._add_polygon(polygon)
 
     def _parse_geometry(self, featuretype: str, geometry):
         coordinates = geometry.get('coordinates')
 
         if not coordinates:
-            logger.error(
+            log.error(
                 'No coordinates found for current %s, skipping' % featuretype)
             return
 
@@ -207,7 +207,7 @@ class GeoJSONParser:
                             'The given GeoJSON has no features and ' +
                             'is not a GeometryCollection!'
                         )
-                        logger.error('Feature <type> field not found.')
+                        log.error('Feature <type> field not found.')
                         continue
 
                     self._parse_geometry(feature_type, geometry)
@@ -217,12 +217,12 @@ class GeoJSONParser:
         for feature in self._yield_features():
             geo = feature.get("geometry")
             if not geo:
-                logger.warning("Skipping feature without any geometry: %s", feature)
+                log.warning("Skipping feature without any geometry: %s", feature)
                 continue
 
             feature_type = feature["geometry"].get('type')
             if not feature_type:
-                logger.error('Feature type property not found.')
+                log.error('Feature type property not found.')
                 continue
 
             if feature_type not in features_found_map:
@@ -236,5 +236,5 @@ class GeoJSONParser:
 
             self._parse_geometry(feature_type, geometry)
 
-        logger.info("Finished creating geometry!")
-        logger.info("Features found: %s", pprint.pformat(features_found_map))
+        log.info("Finished creating geometry!")
+        log.info("Features found: %s", pprint.pformat(features_found_map))
