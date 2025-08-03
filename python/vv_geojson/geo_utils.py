@@ -4,7 +4,7 @@ import pprint
 import logging
 import math
 from pathlib import Path
-from typing import TypeAlias, Union
+from typing import TypeAlias, Union, Tuple, Optional
 
 if not os.getenv('DEV'):
     import hou
@@ -66,6 +66,7 @@ class GeoJSONParser:
         self._node_geo = geo
         self._geojson_path: os.PathLike = geojsonpath
         self._radius: IntOrFloat = 100
+        self._point_attributes = set()
 
         if not os.path.isfile(geojsonpath):
             hou.ui.displayMessage('Please provide a path to an existing file,'
@@ -105,15 +106,26 @@ class GeoJSONParser:
 
         return geometry
 
-    def _add_point(self, coordinates):
-
+    def _add_point(
+        self,
+        coordinates: Tuple[int, int],
+        properties: Optional[dict] = None,
+    ):
         assert len(coordinates) == 2
 
         lon, lat = coordinates
-
         point = self._node_geo.createPoint()
         x, y, z = spherical_to_cartesian(lon, lat, self._radius)
         point.setPosition((x, y, z))
+
+        if properties:
+            for key, value in properties.items():
+                if key not in self._point_attributes:
+                    self._node_geo.addAttrib(hou.attribType.Point, key, "")
+                    self._point_attributes.add(key)
+
+                if value:
+                    point.setAttribValue(key, value)
 
         return point
 
@@ -157,39 +169,43 @@ class GeoJSONParser:
             log.info(polygon)
             self._add_polygon(polygon)
 
-    def _parse_geometry(self, featuretype: str, geometry):
+    def _parse_geometry(
+        self,
+        feature_geo_type: str,
+        geometry,
+        properties: Optional[dict] = None,
+    ):
         coordinates = geometry.get('coordinates')
 
         if not coordinates:
             log.error(
-                'No coordinates found for current %s, skipping' % featuretype)
+                'No coordinates found for current %s, skipping' % feature_geo_type)
             return
 
-        if featuretype == 'Point':
-            self._add_point(coordinates)
+        if feature_geo_type == 'Point':
+            self._add_point(coordinates, properties)
 
-        elif featuretype == 'MultiLineString':
+        # TODO: Support properties for all feature types, not just on Points
+        elif feature_geo_type == 'MultiLineString':
             self.add_multi_line_string(coordinates)
 
-        elif featuretype == 'LineString':
+        elif feature_geo_type == 'LineString':
             self.add_line_string(coordinates)
 
-        elif featuretype == 'MultiPoint':
+        elif feature_geo_type == 'MultiPoint':
             self._add_multi_point(coordinates)
 
-        elif featuretype == 'Polygon':
+        elif feature_geo_type == 'Polygon':
             self._add_polygon(coordinates)
 
-        elif featuretype == 'MultiPolygon':
-            self._add_multi_polygon(coordinates)
+        elif feature_geo_type == 'MultiPolygon':
+            self._add_multi_polygon(coordinates, )
 
     def create_geo(self, radius: IntOrFloat = 100):
         features_found_map = {}
         self.set_radius(radius)
 
-        _features = self.geojson.get('features')
-        if not _features:
-
+        if not self.geojson.get('features'):
             if self.geojson.get('type') == 'GeometryCollection':
                 geometries = self.geojson.get('geometries')
 
@@ -200,9 +216,9 @@ class GeoJSONParser:
                     return
 
                 for geometry in geometries:
-                    feature_type = geometry.get('type')
+                    feature_geo_type = geometry.get('type')
 
-                    if not feature_type:
+                    if not feature_geo_type:
                         hou.ui.displayMessage(
                             'The given GeoJSON has no features and ' +
                             'is not a GeometryCollection!'
@@ -210,31 +226,32 @@ class GeoJSONParser:
                         log.error('Feature <type> field not found.')
                         continue
 
-                    self._parse_geometry(feature_type, geometry)
+                    self._parse_geometry(feature_geo_type, geometry)
 
             return
 
         for feature in self._yield_features():
             geo = feature.get("geometry")
             if not geo:
-                log.warning("Skipping feature without any geometry: %s", feature)
+                # log.warning("Skipping feature without any geometry: %s", feature)
                 continue
 
-            feature_type = feature["geometry"].get('type')
-            if not feature_type:
+            feature_geo_type = feature["geometry"].get('type')
+            if not feature_geo_type:
                 log.error('Feature type property not found.')
                 continue
 
-            if feature_type not in features_found_map:
-                features_found_map[feature_type] = 1
+            if feature_geo_type not in features_found_map:
+                features_found_map[feature_geo_type] = 1
             else:
-                features_found_map[feature_type] += 1
+                features_found_map[feature_geo_type] += 1
 
-            geometry = self._get_geometry(feature_type, feature)
+            geometry = self._get_geometry(feature_geo_type, feature)
             if not geometry:
                 continue
 
-            self._parse_geometry(feature_type, geometry)
+            properties = feature.get('properties')
+            self._parse_geometry(feature_geo_type, geometry, properties)
 
         log.info("Finished creating geometry!")
         log.info("Features found: %s", pprint.pformat(features_found_map))
