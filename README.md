@@ -31,7 +31,7 @@ This can prove useful whenever you are exploring the data and want to do your co
 A very basic OOP python library than enables you to easily create geometry in Houdini by loading GeoJSON data.
 This is just an hobby project (less than 1K LOCs at the time of writing) but I hope it can help someone out there.
 
-Tested under Houdini 17.5 and Python 2.7.
+Tested under Houdini 20.5 and Python 3.11.
 <br>
 No additional python packages required.
 
@@ -39,9 +39,11 @@ No additional python packages required.
 
 Simply make this module available to your $PYTHONPATH in houdini.
 
-One way to do this is to copy the `python/vv_geojson` folder (which contains the python package) to `$HOUDINI_USER_PREF_DIR/python2.7libs`.
+One way to do this is to copy the `python/vv_geojson` folder (which contains the python package) to `$HOUDINI_USER_PREF_DIR/python3.11libs`.
 
-If you're on mac, `$HOUDINI_USER_PREF_DIR/python2.7libs` could become `/Users/$USER/Library/Preferences/houdini/17.5/python2.7libs`.
+If you're on macOS, `$HOUDINI_USER_PREF_DIR/python3.11libs` could become `/Users/$USER/Library/Preferences/houdini/20.5/python3.11libs`.
+
+On Linux, it would be `/opt/hfs20.5.654/houdini/python3.11libs`
 
 For more infos, see [https://www.sidefx.com/docs/houdini/hom/locations.html#disk](https://www.sidefx.com/docs/houdini/hom/locations.html#disk)
 
