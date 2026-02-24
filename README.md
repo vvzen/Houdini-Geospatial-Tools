@@ -90,3 +90,7 @@ geojson_parser.create_geo(radius=200)
 
 ### Validate your data
 If you're getting weird results inside Houdini, please feel free to open an issue and add the source file that you're trying to import, so that debugging will be easier. If want to double check that you GeoJSON files are written correctly and are using GPS coordinates I would suggest to use this website [http://geojson.io](http://geojson.io)
+
+## python/vv-openusd-geojson-exporter
+
+A library + CLI (`vv-geojson-exporter`) to export GeoJSON files as OpenUSD geometry. Check the [README](https://github.com/vvzen/Houdini-Geospatial-Tools/blob/main/python/vv-openusd-geojson-exporter/README.md) for more info.
