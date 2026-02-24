@@ -1,9 +1,9 @@
 # Houdini Geospatial Tools
 
-This repo is a collection of unordered notebooks, scripts and libraries that I've used in the last years to work with geospatial data in Houdini.
+This monorepo is a collection of unordered notebooks, scripts and libraries that I've used in the last years to work with geospatial data in Houdini.
 Please don't consider it as structured knowledge: it's just a formalized series of hacks that has proven useful enough to be reused in different dataviz projects.
 
-A recap blog post is available here: http://valerioviperino.me/houdini/dem
+A recap blog post is available here: <http://valerioviperino.me/houdini/dem>
 
 ## gdal-dtm-exporter
 
@@ -23,7 +23,7 @@ Each notebook might require different dependencies, but generally you'll always 
 ### Save_GeoTIFF_as_ply
 
 Guides you from the loading of a (generally huge) DEM GeoTIFF to exporting samples of the elevation data, so that you don't have to deal with such a high resolution image if you don't need to.
-If you're in Europe, a good source of DEM files is Copernicus: https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1
+If you're in Europe, a good source of DEM files is Copernicus: <https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1>
 
 This can prove useful whenever you are exploring the data and want to do your core processing using numpy instead of houdini.
 
