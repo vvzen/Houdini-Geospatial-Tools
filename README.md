@@ -7,9 +7,10 @@ A recap blog post is available here: <http://valerioviperino.me/houdini/dem>
 
 ## gdal-dtm-exporter
 
-This simple CLI takes a .IMG Digital Terrain Model as input and spits out a 32bit floating point OpenEXR image.
+This project (CLI+GUI+library) takes a `.IMG` Digital Terrain Model and allows you to generate a 32bit floating point OpenEXR image.
 This is written in Rust and uses the `GDAL` bindings, so you'll need both `cargo` and `gdal` installed.
-See the `Readme.org` for more info.
+
+Check the project [Readme](https://github.com/vvzen/Houdini-Geospatial-Tools/blob/main/gdal-dtm-exporter/Readme.org) for more info.
 
 ## python/notebooks
 
