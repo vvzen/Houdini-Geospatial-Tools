@@ -1,6 +1,4 @@
-# Welcome to Houdini-Geospatial-Tools contribution guide
-
-Thank you for even considering helping the project!
+Thank you for even considering helping the project! ❤️
 
 ## Commit guidelines
 
