@@ -1,0 +1,22 @@
+[project]
+name = "vv-openusd-geojson-exporter"
+version = "0.1.0"
+description = "Library and CLI to export GeoJSON data to OpenUSD"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "usd-core>=25.11",
+]
+
+[project.scripts]
+vv-geojson-exporter = "vv.openusd_geojson_exporter.cli:main"
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = [
+    "ipython>=9.7.0",
+    "mypy>=1.18.2",
+    "types-usd>=24.5.2",
+]
