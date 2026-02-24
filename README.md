@@ -93,4 +93,6 @@ If you're getting weird results inside Houdini, please feel free to open an issu
 
 ## python/vv-openusd-geojson-exporter
 
-A library + CLI (`vv-geojson-exporter`) to export GeoJSON files as OpenUSD geometry. Check the [README](https://github.com/vvzen/Houdini-Geospatial-Tools/blob/main/python/vv-openusd-geojson-exporter/README.md) for more info.
+A library + CLI (`vv-geojson-exporter`) to export GeoJSON files as OpenUSD geometry.
+
+Check the [README](https://github.com/vvzen/Houdini-Geospatial-Tools/blob/main/python/vv-openusd-geojson-exporter/README.md) for more info.
