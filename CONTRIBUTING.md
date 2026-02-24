@@ -12,7 +12,7 @@ For commits, I'm using the classic title+body convention.
 
 Please refer to [A Note About Git Commit Messages](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html) for a full explanation.
 
-TL;DR: Use the imperative tense (_Add feature x_ not _Added feature x_), and separate title and body (if the commit has one) with a newline. Most editors will encourage this style as well.
+TL;DR: Use the imperative tense (_Add feature x_, not _Added feature x_), and separate title and body (if the commit has one) with a newline. Most editors will encourage this style as well.
 
 Here's a classic example:
 
@@ -42,4 +42,6 @@ Further paragraphs come after blank lines.
 
 ### Conventional commits 
 
-I additionally also like to use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0). While what's a `chore:` commit is not identical for everyone, `feat:`, `bugfix:` and `refactor:` are generally pretty objective, and having the distinction in the output of `git log` helps tremendously with grepping.
+I additionally also like to use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0).
+
+While what's a `chore:` commit is not identical for everyone, `feat:`, `bugfix:` and `refactor:` are generally pretty objective, and having the distinction in the output of `git log` helps tremendously with grepping.
