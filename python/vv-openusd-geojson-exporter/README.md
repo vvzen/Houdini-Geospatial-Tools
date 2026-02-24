@@ -8,6 +8,12 @@ The library is currently pretty barebone (alpha state) and lacks support for man
 
 I have created this CLI when working on a Data Visualization of the Car Crashes in San Francisco: [Through the Streets of San Francisco](https://valerioviperino.me/through-the-streets-of-sf). In that article you'll also find wider context of how useful it can be!
 
+### Supported features
+
+As of 2026-02-24, the GeoJSON features supported are:
+- Point
+- LineString
+
 ## Examples
 
 The main CLI offered is `vv-geojson-exporter`.
@@ -30,9 +36,3 @@ vv-geojson-exporter \
     --meters-per-unit 1 \
     --scale-factor 1000
 ```
-
-## Supported features
-
-As of 2026-02-24, the GeoJSON features supported are:
-- Point
-- LineString
