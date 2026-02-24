@@ -46,7 +46,10 @@ pub fn export_dtm_to_exr(
     log::info!(
         "This {} is in '{}' and has {num_bands} band(s).",
         dataset.driver().long_name(),
-        dataset.spatial_ref()?.name()?,
+        dataset
+            .spatial_ref()?
+            .name()
+            .unwrap_or("unknown Spatial Ref".to_string())
     );
 
     log::info!("Raster size: {raster_w}x{raster_h}");
@@ -123,11 +126,11 @@ pub fn export_dtm_to_exr(
                 let rv =
                     band.read_as::<f32>(window, window_size, output_size, Some(resample_algo))?;
 
-                log::debug!("\tData size:   {:?}", rv.size);
+                log::debug!("\tData shape:   {:?}", rv.shape());
                 // log::debug!("\tData values: {:?} ({})", rv.data, rv.data.len());
 
                 // Take N at a time horizontally
-                for (c, chunk) in rv.data.chunks(region_to_read_w).enumerate() {
+                for (c, chunk) in rv.data().chunks(region_to_read_w).enumerate() {
                     let y = y_offset + c;
 
                     for (i, value) in chunk.iter().enumerate() {
